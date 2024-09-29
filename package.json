@@ -1,0 +1,29 @@
+{
+  "name": "new_year_alerter_bot",
+  "version": "0.0.1",
+  "type": "module",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "node bot.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/kyshevchenko/new_year_alerter_bot.git"
+  },
+  "author": "shevchenko_k",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/kyshevchenko/new_year_alerter_bot/issues"
+  },
+  "homepage": "https://github.com/kyshevchenko/new_year_alerter_bot#readme",
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "eslint": "^9.11.1",
+    "gitignore": "^0.7.0",
+    "input": "^1.0.1",
+    "telegraf": "^4.16.3",
+    "telegram": "^2.25.11"
+  }
+}
