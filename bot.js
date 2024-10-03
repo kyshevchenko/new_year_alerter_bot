@@ -1,36 +1,91 @@
-import dotenv from "dotenv";
-import { Telegraf, session } from "telegraf";
+import { TelegramClient } from "telegram";
+import { StringSession } from "telegram/sessions/index.js";
+import input from "input";
+import fs from "fs";
+import path from "path";
 
+import dotenv from "dotenv";
 dotenv.config();
 
-// const usersIds = process.env.USERS_ID;
-const usersIds = [233008798, 417731323];
+const __dirname = path.dirname(new URL(import.meta.url).pathname);
 
-const keyword = process.env.KEYWORD;
+const apiId = process.env.API_TELEGRAM_ID;
+const apiHash = process.env.API_TELEGRAM_HASH;
 
-const bot = new Telegraf(process.env.BOT_TOKEN);
-bot.use(session());
+const sessionFile = path.join(__dirname, "session.txt");
 
-const isIncludesKeywords = (text, caption) => {
-  return (
-    text.toLowerCase().includes(keyword) ||
-    caption.toLowerCase().includes(keyword)
-  );
-};
+const stringSession = new StringSession(
+  fs.existsSync(sessionFile) ? fs.readFileSync(sessionFile, "utf8") : ""
+);
 
-bot.on("message", async (ctx) => {
-  const newText = ctx.message.text || "";
-  const newCaption = ctx.message.caption || "";
-
-  ctx.message.chat.id && console.log("ctx.message.chat.id", ctx.message.chat.id);
-
-  ctx.chat.id && console.log("ctx.chat.id", ctx.chat.id);
-
-  if (isIncludesKeywords(newText, newCaption)) {
-    for (const userId of usersIds) {
-      await ctx.forwardMessage(userId);
-    }
-  }
+const client = new TelegramClient(stringSession, apiId, apiHash, {
+  connectionRetries: 5,
 });
 
-bot.launch();
+const allowedChatIds = [
+  -1001045868879,
+  -1001141664489,
+  -1001067688841,
+  -1001092283652,
+  -1001754252633, // тестовый чат топор live
+];
+
+const dictionary = [
+  "новый год",
+  "нового года",
+  "москва",
+  "москве",
+  "египет",
+  "оаэ",
+  "шри-ланка",
+  "шри-ланку",
+  "иран",
+  "турция",
+  "израиль",
+  "фильм",
+  "сезон",
+  "кино",
+  "сериал",
+];
+
+(async () => {
+  console.log("Loading interactive example...");
+  await client.start({
+    phoneNumber: async () => await input.text("Введите ваш номер телефона: "),
+    password: async () =>
+      await input.text("Введите ваш пароль (если используется): "),
+    phoneCode: async () => await input.text("Введите код из Telegram: "),
+    onError: (err) => console.log(err),
+  });
+  console.log("Вы авторизованы!");
+
+  console.log("Ваша строка сессии:");
+  console.log(client.session.save());
+
+  const isRequiredWords = (newMessage) => {
+    return dictionary.some((e) => newMessage.toLowerCase().includes(e));
+  };
+
+  client.addEventHandler(async (update) => {
+    if (update?.message) {
+      const channelId = update.message?.peerId?.channelId?.value;
+      const messageId = update.message.id;
+
+      const newMessage = update?.message?.message;
+
+      if (messageId && channelId && newMessage && isRequiredWords(newMessage)) {
+        console.log("Channel ID:", channelId);
+        console.log("messageId ID:", messageId);
+        console.log("newMessage:", newMessage);
+
+        try {
+          await client.sendMessage(-4558353957, { message: newMessage });
+        } catch (error) {
+          console.error(`Error: ${error.message}`);
+        }
+      }
+    }
+  });
+
+  await client.sendMessage("me", { message: "Работаем! " });
+})();
