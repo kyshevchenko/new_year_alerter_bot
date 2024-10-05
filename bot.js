@@ -7,49 +7,42 @@ import path from "path";
 import dotenv from "dotenv";
 dotenv.config();
 
-const __dirname = path.dirname(new URL(import.meta.url).pathname);
-
-const apiId = process.env.API_TELEGRAM_ID;
+const apiId = Number(process.env.API_TELEGRAM_ID);
 const apiHash = process.env.API_TELEGRAM_HASH;
+const forwardChatId = process.env.FORWARD_CHAT_ID;
 
-const sessionFile = path.join(__dirname, "session.txt");
-
+const __dirname = path.dirname(new URL(import.meta.url).pathname);
+const sessionFile = path.join(__dirname, "session2.txt");
 const stringSession = new StringSession(
   fs.existsSync(sessionFile) ? fs.readFileSync(sessionFile, "utf8") : ""
 );
-
 const client = new TelegramClient(stringSession, apiId, apiHash, {
   connectionRetries: 5,
 });
 
-const allowedChatIds = [
-  -1001045868879,
-  -1001141664489,
-  -1001067688841,
-  -1001092283652,
-  -1001754252633, // тестовый чат топор live
-];
+let idMessageStorage = []; // id сообщений, которые уже были в чате
 
-const dictionary = [
+// раз в 2 дня очищаем массив id сообщений
+setInterval(() => {
+  idMessageStorage = [];
+}, 1000000000);
+
+const keywords = [
   "новый год",
   "нового года",
-  "москва",
-  "москве",
-  "египет",
-  "оаэ",
+  "новогодний",
+  "новогодние",
   "шри-ланка",
+  "шри ланку",
   "шри-ланку",
-  "иран",
-  "турция",
-  "израиль",
-  "фильм",
-  "сезон",
-  "кино",
-  "сериал",
 ];
 
-(async () => {
-  console.log("Loading interactive example...");
+// условие для подтверждения о содержании в сообщении необходимых слов
+const isKeyword = (newMessage) => {
+  return keywords.some((e) => newMessage.toLowerCase().includes(e));
+};
+
+async function startBot() {
   await client.start({
     phoneNumber: async () => await input.text("Введите ваш номер телефона: "),
     password: async () =>
@@ -57,29 +50,36 @@ const dictionary = [
     phoneCode: async () => await input.text("Введите код из Telegram: "),
     onError: (err) => console.log(err),
   });
-  console.log("Вы авторизованы!");
+  console.log("Авторизация прошла успешно!");
 
-  console.log("Ваша строка сессии:");
+  console.log("Сессия:");
   console.log(client.session.save());
-
-  const isRequiredWords = (newMessage) => {
-    return dictionary.some((e) => newMessage.toLowerCase().includes(e));
-  };
 
   client.addEventHandler(async (update) => {
     if (update?.message) {
-      const channelId = update.message?.peerId?.channelId?.value;
+      const channelId = update?.message?.peerId?.channelId?.value;
+      const newMessage = update?.message?.message;
       const messageId = update.message.id;
 
-      const newMessage = update?.message?.message;
+      if (
+        messageId &&
+        channelId &&
+        newMessage &&
+        !idMessageStorage.includes(messageId) && // проверяем на дубли сообщения
+        isKeyword(newMessage) // проверям справочник ключевых слов
+      ) {
+        idMessageStorage.push(messageId);
 
-      if (messageId && channelId && newMessage && isRequiredWords(newMessage)) {
-        console.log("Channel ID:", channelId);
-        console.log("messageId ID:", messageId);
-        console.log("newMessage:", newMessage);
-
+        // Пересылаем сообщение целиком в другой чат
         try {
-          await client.sendMessage(-4558353957, { message: newMessage });
+          await client.forwardMessages(forwardChatId, {
+            messages: [messageId],
+            fromPeer: update.message.peerId,
+          });
+
+          await client.sendMessage("me", {
+            message: "Cообщение перехвачено и отправлено в чат",
+          });
         } catch (error) {
           console.error(`Error: ${error.message}`);
         }
@@ -87,5 +87,7 @@ const dictionary = [
     }
   });
 
-  await client.sendMessage("me", { message: "Работаем! " });
-})();
+  await client.sendMessage("me", { message: "Бот запущен! " });
+}
+
+startBot();
