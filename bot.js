@@ -32,9 +32,11 @@ const keywords = [
   "нового года",
   "новогодний",
   "новогодние",
+  "новогодних",
   "шри-ланка",
-  "шри ланку",
   "шри-ланку",
+  "шри ланка",
+  "шри ланку",
 ];
 
 // условие для подтверждения о содержании в сообщении необходимых слов
@@ -65,7 +67,7 @@ async function startBot() {
         messageId &&
         channelId &&
         newMessage &&
-        !idMessageStorage.includes(messageId) && // проверяем на дубли сообщения
+        !idMessageStorage.includes(messageId) && // проверяем messageId, чтобы не отпралять дубли в чат
         isKeyword(newMessage) // проверям справочник ключевых слов
       ) {
         idMessageStorage.push(messageId);
