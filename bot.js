@@ -63,11 +63,20 @@ async function startBot() {
       const newMessage = update?.message?.message;
       const messageId = update.message.id;
 
+      // блок для отправки сообщений Артему // TODO дополнить логикой фильтрации и вынести в отдельную функцию
+      // if (update?.userId?.value) {
+      //   // Отправляем сообщение Артему
+      //   console.log("update?.userId?.value ->", update?.userId?.value);
+      //   await client.sendMessage(process.env.ARTEM_CHAT_ID, { // id Артема
+      //     message: "Салам Алеймум!",
+      //   });
+      // }
+
       if (
         messageId &&
         channelId &&
         newMessage &&
-        !messageStorage.includes(newMessage) && // проверяем newMessage, чтобы не отпралять дубли в чат
+        !messageStorage.includes(newMessage) && // проверяем newMessage, чтобы не отправлять дубли в чат
         isKeyword(newMessage) // проверям справочник ключевых слов
       ) {
         messageStorage.push(newMessage);
