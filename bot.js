@@ -20,12 +20,12 @@ const client = new TelegramClient(stringSession, apiId, apiHash, {
   connectionRetries: 5,
 });
 
-let idMessageStorage = []; // id сообщений, которые уже были в чате
+let messageStorage = []; // id сообщений, которые уже были в чате
 
-// раз в 2 дня очищаем массив id сообщений
+// раз в 2 дня очищаем массив id сообщений // TODO изменить условие для хранения инф о сообщении и удалить интервал
 setInterval(() => {
-  idMessageStorage = [];
-}, 1000000000);
+  messageStorage = [];
+}, 200000000);
 
 const keywords = [
   "новый год",
@@ -67,13 +67,13 @@ async function startBot() {
         messageId &&
         channelId &&
         newMessage &&
-        !idMessageStorage.includes(messageId) && // проверяем messageId, чтобы не отпралять дубли в чат
+        !messageStorage.includes(newMessage) && // проверяем newMessage, чтобы не отпралять дубли в чат
         isKeyword(newMessage) // проверям справочник ключевых слов
       ) {
-        idMessageStorage.push(messageId);
+        messageStorage.push(newMessage);
 
-        // Пересылаем сообщение целиком в другой чат
         try {
+          // Пересылаем сообщение целиком в другой чат
           await client.forwardMessages(forwardChatId, {
             messages: [messageId],
             fromPeer: update.message.peerId,
@@ -90,6 +90,19 @@ async function startBot() {
   });
 
   await client.sendMessage("me", { message: "Бот запущен! " });
+
+  // ежедневное (раз в сутки) сообщение-подтверждение работоспособности бота
+  setInterval(async () => {
+    const dateOnly = new Date().toLocaleDateString("ru-RU", {
+      timeZone: "Europe/Moscow",
+    });
+    const timeOnly = new Date().toLocaleTimeString("ru-RU", {
+      timeZone: "Europe/Moscow",
+    });
+    await client.sendMessage("me", {
+      message: `Бот работает штатно: ${dateOnly}:${timeOnly}`,
+    });
+  }, 86400000);
 }
 
 startBot();
