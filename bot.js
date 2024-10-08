@@ -22,11 +22,6 @@ const client = new TelegramClient(stringSession, apiId, apiHash, {
 
 let messageStorage = []; // id сообщений, которые уже были в чате
 
-// раз в 2 дня очищаем массив id сообщений // TODO изменить условие для хранения инф о сообщении и удалить интервал
-setInterval(() => {
-  messageStorage = [];
-}, 200000000);
-
 const keywords = [
   "новый год",
   "нового года",
@@ -61,7 +56,16 @@ async function startBot() {
     if (update?.message) {
       const channelId = update?.message?.peerId?.channelId?.value;
       const newMessage = update?.message?.message;
-      const messageId = update.message.id;
+      const messageId = update?.message?.id;
+
+      // логирования для отладки:
+      // console.log("---------------------------------");
+      // console.log("Время :", new Date());
+      // console.log("messageStorage до проверки условия:", messageStorage);
+      // console.log("channelId до проверки условия:", channelId);
+      // console.log("messageId до проверки условия:", messageId);
+      // console.log("newMessage до проверки условия:", newMessage);
+      // console.log("---------------------------------");
 
       // блок для отправки сообщений Артему // TODO дополнить логикой фильтрации и вынести в отдельную функцию
       // if (update?.userId?.value) {
@@ -81,6 +85,16 @@ async function startBot() {
       ) {
         messageStorage.push(newMessage);
 
+        // логирования для отладки:
+        // console.log("---------------------------------");
+        // console.log("messageStorage :", messageStorage);
+        // console.log("channelId :", channelId);
+        // console.log("messageId :", messageId);
+        // console.log("newMessage :", newMessage);
+        // console.log("---------------------------------");
+        // console.log("update после проверки :", update);
+        // console.log("---------------------------------");
+
         try {
           // Пересылаем сообщение целиком в другой чат
           await client.forwardMessages(forwardChatId, {
@@ -89,7 +103,7 @@ async function startBot() {
           });
 
           await client.sendMessage("me", {
-            message: "Cообщение перехвачено и отправлено в чат",
+            message: `Cообщение перехвачено и отправлено в чат. Хранилище сообщений: ${messageStorage}`,
           });
         } catch (error) {
           console.error(`Error: ${error.message}`);
@@ -109,7 +123,7 @@ async function startBot() {
       timeZone: "Europe/Moscow",
     });
     await client.sendMessage("me", {
-      message: `Бот работает штатно: ${dateOnly}:${timeOnly}`,
+      message: `Бот работает штатно: ${dateOnly}:${timeOnly}. Хранилище сообщений: ${messageStorage}`,
     });
   }, 86400000);
 }
