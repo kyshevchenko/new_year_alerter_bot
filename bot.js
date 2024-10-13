@@ -33,8 +33,8 @@ const keywords = [
 ];
 
 // условие для подтверждения о содержании в сообщении необходимых слов
-const isKeyword = (newMessage) => {
-  return keywords.some((e) => newMessage.toLowerCase().includes(e));
+const isKeyword = (message) => {
+  return keywords.some((e) => message.toLowerCase().includes(e));
 };
 
 const daysDeclension = (number) => {
@@ -61,7 +61,8 @@ async function startBot() {
   client.addEventHandler(async (update) => {
     if (update?.message) {
       const channelId = update?.message?.peerId?.channelId?.value;
-      const newMessage = update?.message?.message?.substr(0, 25); // Обрезаем сообщение, чтобы не хранить его целиком
+      const shortMessage = update?.message?.message?.substr(0, 25); // Обрезаем сообщение, чтобы не хранить его целиком
+      const fullMessage = update?.message?.message;
       const messageId = update?.message?.id;
 
       // логирования для отладки:
@@ -70,7 +71,7 @@ async function startBot() {
       // console.log("messageStorage до проверки условия:", messageStorage);
       // console.log("channelId до проверки условия:", channelId);
       // console.log("messageId до проверки условия:", messageId);
-      // console.log("newMessage до проверки условия:", newMessage);
+      // console.log("shortMessage до проверки условия:", shortMessage);
       // console.log("---------------------------------");
 
       // блок для отправки сообщений Артему // TODO дополнить логикой фильтрации и вынести в отдельную функцию
@@ -85,18 +86,18 @@ async function startBot() {
       if (
         messageId &&
         channelId &&
-        newMessage &&
-        !messageStorage.includes(newMessage) && // проверяем newMessage, чтобы не отправлять дубли в чат
-        isKeyword(newMessage) // проверям справочник ключевых слов
+        shortMessage &&
+        !messageStorage.includes(shortMessage) && // проверяем shortMessage, чтобы не отправлять дубли в чат
+        isKeyword(fullMessage) // проверям справочник ключевых слов
       ) {
-        messageStorage.push(newMessage);
+        messageStorage.push(shortMessage);
 
         // логирования для отладки:
         // console.log("---------------------------------");
         // console.log("messageStorage :", messageStorage);
         // console.log("channelId :", channelId);
         // console.log("messageId :", messageId);
-        // console.log("newMessage :", newMessage);
+        // console.log("shortMessage :", shortMessage);
         // console.log("---------------------------------");
         // console.log("update после проверки :", update);
         // console.log("---------------------------------");
