@@ -20,7 +20,8 @@ const client = new TelegramClient(stringSession, apiId, apiHash, {
   connectionRetries: 5,
 });
 
-let messageStorage = []; // id сообщений, которые уже были в чате
+let messageStorage = []; // хранилище сообщений, которые уже были в чате
+let dayCounter = 0; // счетчик дней работы боты
 
 const keywords = [
   "новый год",
@@ -28,16 +29,20 @@ const keywords = [
   "новогодний",
   "новогодние",
   "новогодних",
-  "шри-ланка",
-  "шри-ланку",
-  "шри-ланке",
-  "шри ланка",
-  "шри ланку",
+  "новым годом",
 ];
 
 // условие для подтверждения о содержании в сообщении необходимых слов
 const isKeyword = (newMessage) => {
   return keywords.some((e) => newMessage.toLowerCase().includes(e));
+};
+
+const daysDeclension = (number) => {
+  if (number > 10 && [11, 12, 13, 14].includes(number % 100)) return "дней";
+  lastNum = number % 10;
+  if (lastNum === 1) return "день";
+  if ([2, 3, 4].includes(lastNum)) return "дня";
+  if ([5, 6, 7, 8, 9, 0].includes(lastNum)) return "дней";
 };
 
 async function startBot() {
@@ -56,7 +61,7 @@ async function startBot() {
   client.addEventHandler(async (update) => {
     if (update?.message) {
       const channelId = update?.message?.peerId?.channelId?.value;
-      const newMessage = update?.message?.message;
+      const newMessage = update?.message?.message?.substr(0, 25); // Обрезаем сообщение, чтобы не хранить его целиком
       const messageId = update?.message?.id;
 
       // логирования для отладки:
@@ -104,7 +109,7 @@ async function startBot() {
           });
 
           await client.sendMessage("me", {
-            message: `Cообщение перехвачено и отправлено в чат. Хранилище сообщений: ${messageStorage}`,
+            message: `Cообщение перехвачено и отправлено в чат.`,
           });
         } catch (error) {
           console.error(`Error: ${error.message}`);
@@ -115,18 +120,22 @@ async function startBot() {
 
   await client.sendMessage("me", { message: "Бот запущен! " });
 
-  // ежедневное (раз в сутки) сообщение-подтверждение работоспособности бота
+  // ежедневное сообщение-подтверждение работоспособности бота
   setInterval(async () => {
-    const dateOnly = new Date().toLocaleDateString("ru-RU", {
-      timeZone: "Europe/Moscow",
-    });
-    const timeOnly = new Date().toLocaleTimeString("ru-RU", {
-      timeZone: "Europe/Moscow",
-    });
+    dayCounter += 1;
+
     await client.sendMessage("me", {
-      message: `Бот работает штатно: ${dateOnly}:${timeOnly}. Хранилище сообщений: ${messageStorage}`,
+      message: `Бот работает штатно: ${dayCounter} 
+      ${daysDeclension(dayCounter)}. 
+      Хранилище: ${messageStorage.length} сообщений.`,
     });
-  }, 86400000);
+  }, 86400000); // раз в сутки
+
+  setInterval(async () => {
+    await client.sendMessage("me", {
+      message: `Хранилище: ${messageStorage.join("\n--------\n")}`,
+    });
+  }, 26400000); // 4 раза в сутки
 }
 
 startBot();
