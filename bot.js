@@ -121,22 +121,15 @@ async function startBot() {
 
   await client.sendMessage("me", { message: "Бот запущен! " });
 
-  // ежедневное сообщение-подтверждение работоспособности бота
-  setInterval(async () => {
-    dayCounter += 1;
-
-    await client.sendMessage("me", {
-      message: `Бот работает штатно: ${dayCounter} 
-      ${daysDeclension(dayCounter)}. 
-      Хранилище: ${messageStorage.length} сообщений.`,
-    });
-  }, 86400000); // раз в сутки
-
-  setInterval(async () => {
-    await client.sendMessage("me", {
-      message: `Хранилище: ${messageStorage.join("\n--------\n")}`,
-    });
-  }, 26400000); // 4 раза в сутки
+    // ежедневное сообщение-подтверждение работоспособности бота
+    setInterval(async () => {
+      dayCounter += 1;
+  
+      await client.sendMessage("me", {
+        message: `Бот работает штатно: ${dayCounter} ${daysDeclension(dayCounter)}. 
+        Хранилище: ${messageStorage.length} сообщений.`,
+      });
+    }, 86400000); // раз в сутки
 }
 
 startBot();
