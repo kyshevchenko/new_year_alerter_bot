@@ -39,7 +39,7 @@ const isKeyword = (message) => {
 
 const daysDeclension = (number) => {
   if (number > 10 && [11, 12, 13, 14].includes(number % 100)) return "дней";
-  lastNum = number % 10;
+  const lastNum = number % 10;
   if (lastNum === 1) return "день";
   if ([2, 3, 4].includes(lastNum)) return "дня";
   if ([5, 6, 7, 8, 9, 0].includes(lastNum)) return "дней";
